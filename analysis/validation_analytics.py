@@ -1,9 +1,9 @@
-def analyze_validation(
-    validation_results
-):
+def analyze_validation(analysis_input):
     """
     Analyze validation outcomes.
     """
+
+    validation_results = analysis_input.get("test_tasks", [])
 
     validated = 0
     failed = 0
@@ -11,48 +11,26 @@ def analyze_validation(
 
     for result in validation_results:
 
-        evidence = result.get(
-            "evidence",
-            []
-        )
+        if not isinstance(result, dict):
+            result = {"raw": result}
 
-        if (
-            result.get(
-                "validated",
-                False
-            )
-        ):
+        evidence = result.get("evidence", [])
+
+        if result.get("validated", False):
             validated += 1
 
-        elif (
-            evidence
-            and
-            evidence[0]
-            == "No executor available"
-        ):
+        elif evidence and evidence[0] == "No executor available":
             untested += 1
 
         else:
             failed += 1
 
-    total = (
-        validated
-        + failed
-        + untested
-    )
+    total = validated + failed + untested
 
     score = 0
 
     if total:
-
-        score = round(
-            validated
-            /
-            total
-            *
-            100,
-            2
-        )
+        score = round(validated / total * 100, 2)
 
     return {
         "validated": validated,

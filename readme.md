@@ -1,39 +1,73 @@
-# 🛡️ Local WPCTF (V1.1.2)
+# 🛡️ Local WPCTF (V1.1.3)
 
 ## 🎯 Overview
 
-Local WPCTF is a modular **Web Application Security Assessment Framework** designed for structured security assessment, attack surface modeling, validation, and security analytics.
+Local WPCTF is a modular **Web Application Security Assessment Framework** designed for structured security assessment, attack surface modeling, validation, security analytics, and AI-assisted security reasoning.
 
-Rather than acting as an automated exploitation tool, Local WPCTF focuses on building a reusable security reasoning framework capable of understanding modern web applications through a clean, extensible architecture.
-
-Current supported and planned targets include:
-
-- 🧩 WordPress
-- 🧪 DVWA
-- 🍔 OWASP Juice Shop
-- 📚 WebGoat
-- 🕷️ Mutillidae
-- 🌐 Generic Web Applications
+This version introduces the first **hybrid integration layer between rule-based scanning, external pentesting engine execution, and LLM-based security analysis**, marking the transition toward AI-assisted security intelligence.
 
 ---
 
 # 🧠 Design Philosophy
 
-Local WPCTF follows several core principles:
+The framework evolves while preserving its core principles:
 
 - Clean Architecture
 - Single Responsibility Principle
 - Modular Design
 - Framework Agnostic
 - Security Reasoning over Signature Detection
-
-The project is designed as a long-term security framework rather than a collection of individual scanners.
-
-Every component has a clearly defined responsibility, allowing new targets and assessment modules to be added without affecting existing functionality.
+- AI-assisted analysis
 
 ---
 
-# 🏗️ Layer Architecture
+# 🧠 Major Enhancement (V1.1.3)
+
+## 🤖 AI Security Layer Integration
+
+Local WPCTF now integrates a **local LLM reasoning layer** via LM Studio-compatible OpenAI API interface.
+
+Capabilities:
+
+- Vulnerability interpretation using LLM reasoning
+- Bilingual security analysis (English + Chinese)
+- Attack vector explanation generation
+- Mitigation suggestion synthesis
+- Structured scan result understanding
+
+---
+
+## ⚙️ PentestAgent Integration
+
+External PentestAgent engine is now integrated into the pipeline.
+
+Functionality:
+
+- Executes automated penetration testing workflows
+- Supports full-mode scanning execution
+- Acts as external security execution engine
+
+---
+
+## 🔗 Hybrid Security Pipeline
+
+```text
+Scanners + PentestAgent
+        ↓
+Attack Surface Construction
+        ↓
+Attack Graph Generation
+        ↓
+LLM Security Analysis
+        ↓
+Risk Analytics Engine
+        ↓
+Report Generation
+```
+
+---
+
+# 🧱 Updated Architecture Layer
 
 ```text
                     Local WPCTF
@@ -51,6 +85,11 @@ Every component has a clearly defined responsibility, allowing new targets and a
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
+        │      PentestAgent Layer     │
+        │ External Execution Engine   │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────▼──────────────┐
         │         Workflow            │
         │ Attack Surface              │
         │ Attack Graph                │
@@ -59,46 +98,35 @@ Every component has a clearly defined responsibility, allowing new targets and a
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
-        │          Attack             │
-        │ Attack Engines              │
-        │ Validators                  │
-        │ Wordlists                   │
-        └──────────────┬──────────────┘
-                       │
-        ┌──────────────▼──────────────┐
-        │         Executors           │
-        │ Security Validation         │
+        │     AI Analysis Layer       │
+        │ LLM Reasoning Engine        │
+        │ Security Interpretation     │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
         │         Analysis            │
-        │ Risk                        │
-        │ Coverage                    │
+        │ Risk • Coverage • Posture   │
         │ Validation                  │
-        │ Security Posture            │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
         │          Reports            │
-        │ Dashboard                   │
-        │ JSON                        │
-        │ OWASP Mapping               │
+        │ JSON • Dashboard • OWASP    │
         └─────────────────────────────┘
 ```
 
 ---
 
-# 🔄 Framework Pipeline
-
-The execution pipeline is intentionally simple.
-
-Business logic is isolated inside dedicated modules while `main.py` serves only as the pipeline orchestrator.
+# 🚀 Enhanced Pipeline Flow
 
 ```text
 Configuration
       │
       ▼
 Scanner Pipeline
+      │
+      ▼
+PentestAgent Execution Layer
       │
       ▼
 Application Context
@@ -111,6 +139,9 @@ Attack Surface Construction
       │
       ▼
 Attack Graph Generation
+      │
+      ▼
+LLM Security Analysis
       │
       ▼
 Test Plan Generation
@@ -127,321 +158,109 @@ Report Generation
 
 ---
 
-# 📁 Project Structure
+# 🧠 AI Security Capabilities
 
-```text
-Local WPCTF/
+## 🤖 LLM-Based Analysis
 
-├── analysis/
-│   ├── Coverage Analytics
-│   ├── Risk Analytics
-│   ├── Validation Analytics
-│   └── Security Posture
-│
-├── attack/
-│   ├── Attack Engines
-│   ├── Validators
-│   └── Wordlist Loader
-│
-├── core/
-│   ├── App Context
-│   ├── App Classification
-│   └── Schema Layer
-│
-├── executors/
-│   └── Security Validation Executors
-│
-├── reports/
-│   ├── Dashboard
-│   ├── JSON Report
-│   └── OWASP Mapping
-│
-├── resources/
-│   ├── Payloads
-│   └── Wordlists
-│
-├── scanners/
-│   └── Discovery Modules
-│
-├── scripts/
-│   └── Development Utilities
-│
-├── workflow/
-│   ├── Attack Surface
-│   ├── Attack Graph
-│   ├── Test Plan
-│   ├── Validation Execution
-│   └── Execution Workflow
-│
-└── main.py
-```
+- Scan result interpretation
+- Vulnerability classification
+- Risk scoring (0–10)
+- Attack vector reasoning
+- Mitigation suggestions
+- Bilingual output (EN + CN)
 
 ---
 
-# 🚀 Core Capabilities
+## ⚙️ PentestAgent Execution
 
-## 🔍 Security Discovery
-
-- Authentication discovery
-- SQL injection discovery
-- XSS discovery
-- Upload surface discovery
-- Cookie inspection
-- HTTP header inspection
-- Directory enumeration
-- API discovery
-- WordPress reconnaissance
+- External security testing engine integration
+- Automated attack workflow execution
+- Full-mode penetration testing support
 
 ---
 
-## 🧠 Application Intelligence
+# 📊 Analysis Enhancements
 
-- Application context generation
-- Framework classification
-- Schema-based data normalization
-- Unified scanner output
-
----
-
-## 🕸️ Attack Surface Modeling
-
-- Scan-result driven attack surface construction
-- Graph-ready security modeling
-- Structured security asset representation
+- LLM-assisted scan interpretation
+- Semantic vulnerability enrichment
+- AI reasoning overlay on scan data
+- Structured security understanding layer
 
 ---
 
-## 🧩 Workflow Intelligence
+# 📄 Reporting Enhancements
 
-- Attack graph generation
-- Validation planning
-- Execution workflow
-- Security assessment pipeline
+Added:
 
----
+- `llm_analysis` field
+- AI-enhanced vulnerability reasoning layer
 
-## 🧪 Security Validation
+Reports now include:
 
-Current validation modules include:
-
-- Authentication validation
-- SQL validation
-- XSS validation
-- Brute-force testing
-- Validation execution engine
-
----
-
-## 📊 Security Analytics
-
+- Scan results
+- Attack surface graph
+- AI reasoning output
 - Risk analytics
-- Coverage analytics
-- Validation analytics
-- Security posture evaluation
 
 ---
 
-## 📄 Reporting
+# 🧱 Architecture Evolution
 
-- JSON reports
-- Executive dashboard
-- OWASP Top 10 mapping
-- Standardized reporting pipeline
-
----
-
-# 🧱 Clean Architecture Principles
-
-Local WPCTF enforces strict responsibility separation.
-
-## Core
-
-Responsible for:
-
-- Context
-- Classification
-- Schema
-
----
-
-## Scanner
-
-Responsible only for discovering security information.
-
-No business logic.
-
----
-
-## Workflow
-
-Responsible for:
-
-- Attack Surface
-- Attack Graph
-- Test Plan
-- Validation Planning
-
-No scanning.
-
-No reporting.
-
----
-
-## Attack
-
-Responsible for:
-
-- Attack engines
-- Validators
-- Payload resources
-- Wordlists
-
----
-
-## Executors
-
-Responsible only for executing specific security validations.
-
----
-
-## Analysis
-
-Responsible only for analytics.
-
-- Risk
-- Coverage
-- Validation
-- Security Posture
-
----
-
-## Reports
-
-Responsible only for rendering outputs.
-
-- Dashboard
-- JSON
-- OWASP Mapping
-
----
-
-# 📦 Version History
-
-## 🟢 v0.x — WordPress Prototype
-
-- WordPress-focused scanner
-- Static vulnerability discovery
-- Initial reporting pipeline
-
----
-
-## 🔵 v1.0.0 — Framework Foundation
-
-- Framework abstraction
-- Multi-target architecture
-- Attack graph modeling
-- Workflow engine
-- Security reasoning pipeline
-
----
-
-## 🟣 v1.1.0 — Generic Scanner Preparation
-
-- Generic scanner architecture
-- Modular project organization
-- Future multi-target foundation
-
----
-
-## 🔵 v1.1.1 — Unified Scanner Schema
-
-- Unified scanner schema
-- Common scanner contract
-- Cross-module compatibility
-
----
-
-## 🟢 v1.1.2 — Clean Architecture Refactoring
-
-Major architectural refactoring focused on maintainability and extensibility.
-
-Highlights include:
-
-- AppContext pipeline introduced
-- Application classifier refactored
-- Dedicated schema layer established
-- Analysis decoupled from reporting
-- JSON reporting redesigned
-- Attack surface consumes scan results directly
-- Legacy function discovery removed
-- Main pipeline simplified into a pure orchestrator
-- Improved modularity for future framework expansion
-
----
-
-# 📄 Output
-
-Generated reports are stored in:
+## Before v1.1.3
 
 ```text
-output/report.json
+Scanners → Analysis → Report
 ```
 
-The report includes:
+## After v1.1.3
 
-- Attack Surface
-- Attack Graph
-- Validation Results
-- Risk Analytics
-- Coverage Analytics
-- Security Posture
-- OWASP Mapping
-- Executive Dashboard Data
-
----
-
-# 🛡️ Safety
-
-Local WPCTF is intended only for:
-
-- Local laboratories
-- Educational environments
-- Authorized security testing
-- Defensive security research
-
-The framework is **not designed for unauthorized exploitation**.
+```text
+Scanners + PentestAgent
+        ↓
+Attack Surface Graph
+        ↓
+LLM Reasoning Layer
+        ↓
+Risk Engine
+        ↓
+Report
+```
 
 ---
 
-# 🚀 Roadmap
+# ⚠️ Current Limitations
 
-## V1.1.3
+- LLM does not yet control scanning decisions
+- PentestAgent operates independently (non-agentic mode)
+- Attack graph is not yet AI-generated
+- No autonomous exploit reasoning yet
 
-- Generic Scanner Engine
+---
+
+# 🔮 Roadmap
 
 ## V1.1.4
 
-- Generic Discovery Framework
-- Target-independent scanner modules
+- LLM-driven attack prioritization
+- Structured JSON LLM output
+- Graph-aware reasoning integration
 
 ## V1.1.5
 
-- Workflow expansion
-- Additional validation modules
-- Improved attack graph reasoning
+- AI-controlled PentestAgent orchestration
+- Adaptive scanning workflows
+- Enhanced exploit simulation
 
 ## V1.2
 
-- AI Security Agent foundation
-- Intelligent assessment planning
-- Autonomous workflow generation
+- Full AI Security Agent architecture
+- Autonomous attack path generation
+- Self-directed security testing loops
 
 ---
 
 # 🎯 Project Vision
 
-Local WPCTF is evolving from a collection of web security scanners into a **modular security reasoning framework**.
+Local WPCTF is evolving from a structured security framework into an **AI-augmented security intelligence system**.
 
-The long-term vision is to provide a reusable architecture capable of supporting diverse web applications, advanced security analytics, graph-based attack modeling, and future AI-assisted security assessment.
-
-> **From vulnerability scanning to structured security intelligence.**
+> From security scanning → to AI-driven security reasoning systems

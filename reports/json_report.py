@@ -1,44 +1,54 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 
 def generate_report(ctx: dict):
-    """
-    Final Report Renderer
-    - NO computation
-    - NO business logic
-    - ONLY formatting
-    """
 
+    # =========================================================
+    # Time (Asia/Shanghai / UTC+8)
+    # =========================================================
+    dt = datetime.now(timezone(timedelta(hours=8)))
+
+    # =========================================================
+    # Report Structure
+    # =========================================================
     return {
         "metadata": {
             "framework": "Local WPCTF",
-            "version": ctx.get("metadata", {}).get("framework_version", "v1.1.0"),
+            "version": ctx.get("metadata", {}).get("framework_version", "v1.1.2"),
             "target": ctx.get("target_url"),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": dt.strftime("%Y-%m-%d %H:%M:%S")
         },
 
-        # --------------------------
+        # =========================================================
         # Core classification
-        # --------------------------
+        # =========================================================
         "classification": ctx.get("classification"),
 
-        # --------------------------
-        # Scan results
-        # --------------------------
+        # =========================================================
+        # Raw scan results
+        # =========================================================
         "scan_results": ctx.get("scan_results"),
 
-        # --------------------------
-        # Analysis layer (ALL scoring already done upstream)
-        # --------------------------
+        # =========================================================
+        # Rule-based + LLM analysis layer
+        # =========================================================
         "analysis": ctx.get("analysis"),
 
-        # --------------------------
-        # Risk / posture already computed
-        # --------------------------
+        # 🔥 optional LLM raw output (if exists)
+        "llm_analysis": ctx.get("llm_analysis"),
+
+        # =========================================================
+        # Risk / posture layer
+        # =========================================================
         "risk_profile": ctx.get("risk_profile"),
 
-        # --------------------------
-        # Endpoints
-        # --------------------------
+        # =========================================================
+        # Attack surface / endpoints
+        # =========================================================
         "endpoints": ctx.get("endpoints"),
+
+        # =========================================================
+        # Graph (if present)
+        # =========================================================
+        "attack_graph": ctx.get("attack_graph"),
     }
