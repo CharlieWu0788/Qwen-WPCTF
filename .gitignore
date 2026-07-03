@@ -29,7 +29,7 @@ htmlcov/
 Thumbs.db
 
 # External dependencies
-third_party/
+#third_party/
 
 # But keep structure file if needed
 #!third_party/.gitkeep
