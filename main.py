@@ -2,7 +2,7 @@ import os
 import json
 import argparse
 
-from scripts.tree_view import tree_core, tree_full
+from scripts.tree.tree_view import tree_core, tree_full
 from workflow.pipeline import scan
 
 

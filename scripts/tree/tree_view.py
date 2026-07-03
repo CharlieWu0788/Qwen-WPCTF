@@ -1,32 +1,11 @@
 import os
 
-# -----------------------------------------------------
-# EXACT MATCH IGNORE
-# -----------------------------------------------------
-
-IGNORE_FILES = {
-    ".DS_Store",
-}
-
-IGNORE_EXTENSIONS = {
-    ".pyc"
-}
-
-IGNORE_DIRS_CORE = {
-    "__pycache__",
-    ".git",
-    ".venv",
-    "venv",
-    "thirdparty"
-}
-
-IGNORE_DIRS_FULL = {
-    ".git",
-    ".venv",
-    "venv",
-    "__pycache__"   # 🚨 FULL 模式也清理 cache
-}
-
+from scripts.tree.tree_settings import (
+    IGNORE_FILES,
+    IGNORE_EXTENSIONS,
+    IGNORE_DIRS_CORE,
+    IGNORE_DIRS_FULL,
+)
 
 # -----------------------------------------------------
 # CORE / FULL ENTRY
@@ -72,7 +51,6 @@ def _tree(dir_path, prefix="", mode="core"):
     except PermissionError:
         return
 
-    # 过滤
     filtered_items = []
 
     for item in items:
@@ -88,17 +66,17 @@ def _tree(dir_path, prefix="", mode="core"):
 
         filtered_items.append(item)
 
-    for i, item in enumerate(filtered_items):
+    for index, item in enumerate(filtered_items):
         path = os.path.join(dir_path, item)
         is_dir = os.path.isdir(path)
 
-        connector = "└── " if i == len(filtered_items) - 1 else "├── "
+        connector = "└── " if index == len(filtered_items) - 1 else "├── "
         suffix = "/" if is_dir else ""
 
         print(prefix + connector + item + suffix)
 
         if is_dir:
-            extension = "    " if i == len(filtered_items) - 1 else "│   "
+            extension = "    " if index == len(filtered_items) - 1 else "│   "
             _tree(path, prefix + extension, mode)
 
 

@@ -32,4 +32,4 @@ Thumbs.db
 third_party/
 
 # But keep structure file if needed
-!third_party/.gitkeep
+#!third_party/.gitkeep

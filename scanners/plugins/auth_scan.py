@@ -13,7 +13,7 @@ def normalize_login_url(url):
     )
 
 
-def scan_authentication(url):
+def scan_auth(url):
     """
     Auth Scan v1.1.0
 

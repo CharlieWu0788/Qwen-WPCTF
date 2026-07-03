@@ -1,10 +1,10 @@
-# 🛡️ Local WPCTF (V1.1.3)
+# 🛡️ Local WPCTF (V1.2.0)
 
 ## 🎯 Overview
 
-Local WPCTF is a modular **Web Application Security Assessment Framework** designed for structured security assessment, attack surface modeling, validation, security analytics, and AI-assisted security reasoning.
+Local WPCTF v1.2.0 introduces a major architectural upgrade by adding a **Preflight System (Target Preparation Layer)**, which decouples target resolution, profile selection, scanner configuration, and environment validation from the core scanning pipeline.
 
-This version introduces the first **hybrid integration layer between rule-based scanning, external pentesting engine execution, and LLM-based security analysis**, marking the transition toward AI-assisted security intelligence.
+The framework evolves toward a modular security reasoning system while maintaining deterministic execution and strict separation of concerns.
 
 ---
 
@@ -21,97 +21,70 @@ The framework evolves while preserving its core principles:
 
 ---
 
-# 🧠 Major Enhancement (V1.1.3)
+# 🧠 Major Enhancement (V1.2.0)
 
-## 🤖 AI Security Layer Integration
+## 🤖 Preflight System
 
-Local WPCTF now integrates a **local LLM reasoning layer** via LM Studio-compatible OpenAI API interface.
+The Preflight System is the core preparation layer before pipeline execution. It ensures that all required execution context is properly resolved and validated prior to security scanning.
 
-Capabilities:
+This layer is responsible for:
 
-- Vulnerability interpretation using LLM reasoning
-- Bilingual security analysis (English + Chinese)
-- Attack vector explanation generation
-- Mitigation suggestion synthesis
-- Structured scan result understanding
+- Target resolution (supports both numeric IDs and string-based aliases)
+- Profile mapping (associates targets with predefined security profiles)
+- Scanner selection (derives scanner sets from profile configuration)
+- Environment validation (verifies target reachability and accessibility)
+- Context construction (builds unified `TargetContext` consumed by downstream pipeline)
 
----
-
-## ⚙️ PentestAgent Integration
-
-External PentestAgent engine is now integrated into the pipeline.
-
-Functionality:
-
-- Executes automated penetration testing workflows
-- Supports full-mode scanning execution
-- Acts as external security execution engine
-
----
-
-## 🔗 Hybrid Security Pipeline
-
-```text
-Scanners + PentestAgent
-        ↓
-Attack Surface Construction
-        ↓
-Attack Graph Generation
-        ↓
-LLM Security Analysis
-        ↓
-Risk Analytics Engine
-        ↓
-Report Generation
-```
+The Preflight System guarantees that the scanning pipeline operates on a fully resolved and validated execution context, eliminating direct dependency on configuration sources.
 
 ---
 
 # 🧱 Updated Architecture Layer
 
 ```text
-                    Local WPCTF
+ Local WPCTF
 
         ┌─────────────────────────────┐
         │            Core             │
         │ Context • Classification    │
-        │ Schema                      │
+        │ Schema • Utilities         │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
         │          Scanner            │
         │ Discovery • Enumeration     │
-        │ Technology Detection        │
+        │ Plugin-based Detection      │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
-        │      PentestAgent Layer     │
-        │ External Execution Engine   │
+        │      Execution Layer        │
+        │ Scanner Orchestration       │
+        │ (PentestAgent Integration)  │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
         │         Workflow            │
         │ Attack Surface              │
         │ Attack Graph                │
-        │ Test Plan                   │
-        │ Validation Planning         │
+        │ Test Planning               │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
-        │     AI Analysis Layer       │
-        │ LLM Reasoning Engine        │
-        │ Security Interpretation     │
-        └──────────────┬──────────────┘
-                       │
-        ┌──────────────▼──────────────┐
-        │         Analysis            │
+        │        Analysis Layer       │
         │ Risk • Coverage • Posture   │
         │ Validation                  │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐
+        │     LLM Enrichment Layer    │
+        │ Security Reasoning          │
+        │ Vulnerability Interpretation│
+        │ Narrative Generation        │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────▼──────────────┐
         │          Reports            │
-        │ JSON • Dashboard • OWASP    │
+        │ JSON • Markdown • OWASP     │
         └─────────────────────────────┘
 ```
 
@@ -120,16 +93,16 @@ Report Generation
 # 🚀 Enhanced Pipeline Flow
 
 ```text
-Configuration
+Configuration (Target Selector)
       │
       ▼
-Scanner Pipeline
+Preflight System
       │
       ▼
-PentestAgent Execution Layer
+Scanner Execution Layer
       │
       ▼
-Application Context
+Application Context Construction
       │
       ▼
 Application Classification
@@ -141,16 +114,16 @@ Attack Surface Construction
 Attack Graph Generation
       │
       ▼
-LLM Security Analysis
-      │
-      ▼
 Test Plan Generation
       │
       ▼
 Validation Execution
       │
       ▼
-Security Analytics
+Analysis Layer (Risk / Coverage / Posture)
+      │
+      ▼
+LLM Enrichment Layer
       │
       ▼
 Report Generation
@@ -158,109 +131,142 @@ Report Generation
 
 ---
 
-# 🧠 AI Security Capabilities
+# ⚙️ Capabilities
 
-## 🤖 LLM-Based Analysis
+## 🔌 Scanner System
 
-- Scan result interpretation
-- Vulnerability classification
-- Risk scoring (0–10)
+The scanner system is fully plugin-based and registry-driven.
+
+Key characteristics:
+
+- Modular scanner plugins
+- Centralized registry execution
+- Deterministic execution order
+- Schema-enforced outputs (safe_wrap)
+
+Each scanner operates independently and returns structured results without shared mutable state.
+
+---
+
+##  ⚙️ Execution Layer
+
+The Execution Layer is responsible for orchestrating scanner execution.
+
+It provides:
+
+- Deterministic scanner orchestration
+- Registry-based plugin execution
+- Integration capability with external execution engines (PentestAgent-compatible design)
+
+Note: This layer is not agentic and does not perform autonomous decision-making.
+
+---
+
+## 📊 AnalysisLayer
+
+The Analysis Layer transforms raw scan outputs into structured security intelligence.
+
+It includes:
+
+- Coverage analysis
+- Risk scoring
+- Security posture evaluation
+- Validation completeness assessment
+
+All outputs are deterministic and schema-driven.
+
+---
+
+## 🤖 LLM Enrichment Layer
+
+The LLM Enrichment Layer provides semantic interpretation over deterministic security results.
+
+Capabilities include:
+
+- Vulnerability interpretation
 - Attack vector reasoning
-- Mitigation suggestions
-- Bilingual output (EN + CN)
+- Risk narrative generation
+- Mitigation recommendations
+- Bilingual output (English + Chinese)
 
----
-
-## ⚙️ PentestAgent Execution
-
-- External security testing engine integration
-- Automated attack workflow execution
-- Full-mode penetration testing support
-
----
-
-# 📊 Analysis Enhancements
-
-- LLM-assisted scan interpretation
-- Semantic vulnerability enrichment
-- AI reasoning overlay on scan data
-- Structured security understanding layer
-
----
+The LLM layer does not control execution flow.
 
 # 📄 Reporting Enhancements
 
-Added:
+Local WPCTF now supports dual-output reporting:
 
-- `llm_analysis` field
-- AI-enhanced vulnerability reasoning layer
+## Structured Report (JSON)
 
-Reports now include:
+Machine-readable format
+Used for automation, dashboards, and downstream processing
 
-- Scan results
-- Attack surface graph
-- AI reasoning output
-- Risk analytics
+```text
+output/report.json
+```
+
+## LLM Report (Markdown)
+
+Human-readable security analysis
+Narrative-based vulnerability explanation
+Security reasoning summary
+
+```text
+output/llm_analysis.md
+```
 
 ---
 
 # 🧱 Architecture Evolution
 
-## Before v1.1.3
+## Before v1.1.x
 
 ```text
 Scanners → Analysis → Report
 ```
 
-## After v1.1.3
+## After v1.2.0
 
 ```text
-Scanners + PentestAgent
-        ↓
-Attack Surface Graph
-        ↓
-LLM Reasoning Layer
-        ↓
-Risk Engine
-        ↓
-Report
+Preflight → Scanner Execution → Workflow → Analysis → LLM Enrichment → Report
 ```
 
 ---
 
 # ⚠️ Current Limitations
 
-- LLM does not yet control scanning decisions
-- PentestAgent operates independently (non-agentic mode)
-- Attack graph is not yet AI-generated
-- No autonomous exploit reasoning yet
+- LLM does not control execution flow
+- No autonomous decision-making loop exists
+- PentestAgent is execution-oriented, not agentic
+- Attack graph is not AI-generated
+- No adaptive scanning strategy yet
 
 ---
 
 # 🔮 Roadmap
 
-## V1.1.4
-
+## v1.2.1
 - LLM-driven attack prioritization
-- Structured JSON LLM output
-- Graph-aware reasoning integration
+- Structured reasoning output standardization
+- Attack graph enrichment layer
 
-## V1.1.5
-
-- AI-controlled PentestAgent orchestration
+## v1.3
+- AI-assisted execution orchestration
 - Adaptive scanning workflows
-- Enhanced exploit simulation
+- Tool-use based PentestAgent evolution
 
-## V1.2
-
+## v2.0
 - Full AI Security Agent architecture
 - Autonomous attack path generation
-- Self-directed security testing loops
+- Closed-loop reasoning system
 
 ---
 
 # 🎯 Project Vision
 
-Local WPCTF is evolving from a structured security framework into an **AI-augmented security intelligence system**.
+Local WPCTF is evolving into a modular AI-assisted security reasoning framework.
+
+It bridges deterministic security scanning with structured LLM-based interpretation, enabling scalable and extensible security analysis pipelines.
+
+From security scanning → to structured security intelligence
 
 > From security scanning → to AI-driven security reasoning systems
