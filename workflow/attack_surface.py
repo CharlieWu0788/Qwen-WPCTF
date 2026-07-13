@@ -94,10 +94,14 @@ def build_attack_surface(scan_results: dict):
 
             node_index += 1
 
+    def scanner_result(name):
+        result = scan_results.get(name) or scan_results.get(f"{name}_scan") or {}
+        return result if isinstance(result, dict) else {}
+
     # =========================================================
     # 1. WordPress Surface
     # =========================================================
-    wp = scan_results.get("wordpress", {}) or {}
+    wp = scanner_result("wordpress")
 
     if wp.get("wordpress_detected"):
         add_node(
@@ -109,7 +113,7 @@ def build_attack_surface(scan_results: dict):
     # =========================================================
     # 2. Auth Surface
     # =========================================================
-    auth = scan_results.get("auth", {}) or {}
+    auth = scanner_result("auth")
 
     add_node(
         "auth_login_urls",
@@ -126,7 +130,7 @@ def build_attack_surface(scan_results: dict):
     # =========================================================
     # 3. SQL Surface
     # =========================================================
-    sql = scan_results.get("sql", {}) or {}
+    sql = scanner_result("sql")
 
     add_node(
         "sql_params",
@@ -137,7 +141,7 @@ def build_attack_surface(scan_results: dict):
     # =========================================================
     # 4. XSS Surface
     # =========================================================
-    xss = scan_results.get("xss", {}) or {}
+    xss = scanner_result("xss")
 
     if xss.get("tested_payloads"):
         add_node(

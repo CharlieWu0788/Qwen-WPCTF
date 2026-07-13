@@ -17,10 +17,10 @@ class AppClassifier:
 
     def classify(self, scan_results: Dict[str, Any]) -> Dict[str, Any]:
 
-        wordpress_result = scan_results.get("wordpress", {})
-        auth_result = scan_results.get("auth", {})
-        api_result = scan_results.get("api", {})
-        header_result = scan_results.get("header", {})
+        wordpress_result = self._result(scan_results, "wordpress")
+        auth_result = self._result(scan_results, "auth")
+        api_result = self._result(scan_results, "api")
+        header_result = self._result(scan_results, "header")
 
         score = 0.0
         evidence = []
@@ -132,6 +132,10 @@ class AppClassifier:
             "tags": sorted(set(tags)),
             "attack_suggestions": []
         }
+
+    def _result(self, scan_results: Dict[str, Any], name: str) -> Dict[str, Any]:
+        result = scan_results.get(name) or scan_results.get(f"{name}_scan") or {}
+        return result if isinstance(result, dict) else {}
 
 
 def classify_application(scan_results: Dict[str, Any]) -> Dict[str, Any]:

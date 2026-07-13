@@ -1,6 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
 
+from core.plugins.base import BasePlugin
+
+
+class WordPressScanner(BasePlugin):
+    name = "wordpress_scan"
+    category = "platform"
+    capability = [
+        "wordpress",
+        "cms",
+        "platform_detection"
+    ]
+
+    def run(self, context):
+        target = context["target"]
+        url = target.get("url") if isinstance(target, dict) else target
+        result = scan_wordpress(url)
+        result["capability_used"] = self.capability
+        return result
+
 
 def scan_wordpress(url):
     """
@@ -56,7 +75,7 @@ def scan_wordpress(url):
         content = generator.get("content", "")
         if isinstance(content, str) and "wordpress" in content.lower():
             evidence_list.append("generator tag found")
-
+            
     # --------------------------------------
     # Decision logic (pure deterministic rule)
     # --------------------------------------

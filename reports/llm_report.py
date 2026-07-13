@@ -17,7 +17,10 @@ def generate_llm_markdown(llm_analysis, metadata=None, scan_results=None):
         if isinstance(llm_analysis, str):
             llm_analysis = json.loads(llm_analysis)
     except Exception:
-        pass
+        llm_analysis = {}
+
+    if not isinstance(llm_analysis, dict):
+        llm_analysis = {}
 
     md.append("## 📌 Summary\n")
 

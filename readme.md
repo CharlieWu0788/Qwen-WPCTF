@@ -1,4 +1,4 @@
-# 🛡️ Local WPCTF (V1.2.0)
+# 🛡️ Local WPCTF (V1.2.1)
 
 ## 🎯 Overview
 
@@ -21,7 +21,7 @@ The framework evolves while preserving its core principles:
 
 ---
 
-# 🧠 Major Enhancement (V1.2.0)
+# 🧠 Major Enhancement (V1.2.1)
 
 ## 🤖 Preflight System
 
@@ -47,7 +47,7 @@ The Preflight System guarantees that the scanning pipeline operates on a fully r
         ┌─────────────────────────────┐
         │            Core             │
         │ Context • Classification    │
-        │ Schema • Utilities         │
+        │ Schema • Utilities          │
         └──────────────┬──────────────┘
                        │
         ┌──────────────▼──────────────┐

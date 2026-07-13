@@ -1,5 +1,3 @@
-import os
-import json
 import argparse
 
 from scripts.tree.tree_view import tree_core, tree_full
@@ -22,34 +20,59 @@ def get_args():
 
 
 # =========================================================
+# Preflight Hook (future extension point)
+# =========================================================
+def preflight_hook(mode: str):
+    """
+    Reserved for future:
+    - environment validation
+    - dependency check
+    - plugin sanity check
+    """
+    print(f"[WPCTF] Mode = {mode}")
+
+
+# =========================================================
 # Main Dispatcher ONLY
 # =========================================================
 def main():
 
     args = get_args()
 
-    # -----------------------------------------------------
-    # Tree Mode
-    # -----------------------------------------------------
-    if args.mode == "tree-core":
-        tree_core()
-        return
+    preflight_hook(args.mode)
 
-    if args.mode == "tree-full":
-        tree_full(".")
-        return
+    try:
 
-    # -----------------------------------------------------
-    # Scan Mode (Pipeline Entry)
-    # -----------------------------------------------------
-    if args.mode == "scan":
-        scan()
-        return
+        # -----------------------------------------------------
+        # Tree Mode (Core View)
+        # -----------------------------------------------------
+        if args.mode == "tree-core":
+            tree_core()
+            return
 
-    # -----------------------------------------------------
-    # Safety fallback
-    # -----------------------------------------------------
-    print(f"[ERROR] Unknown mode: {args.mode}")
+        # -----------------------------------------------------
+        # Tree Mode (Full View)
+        # -----------------------------------------------------
+        if args.mode == "tree-full":
+            tree_full(".")
+            return
+
+        # -----------------------------------------------------
+        # Scan Mode (Pipeline Entry)
+        # -----------------------------------------------------
+        if args.mode == "scan":
+            scan()
+            return
+
+        # -----------------------------------------------------
+        # Safety fallback
+        # -----------------------------------------------------
+        print(f"[ERROR] Unknown mode: {args.mode}")
+
+    except KeyboardInterrupt:
+        print("\n[WPCTF] Interrupted by user")
+    except Exception as e:
+        print(f"[WPCTF][FATAL ERROR] {e}")
 
 
 # =========================================================

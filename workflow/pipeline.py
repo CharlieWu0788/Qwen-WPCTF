@@ -7,29 +7,27 @@ from core.app_context import AppContext
 from core.llm.client import LLMClient
 from core.llm.analyzer import LLMAnalyzer
 
-from workflow.attack_surface import build_attack_surface
-from workflow.test_plan import generate_test_plan
+from core.plugins.auto_loader import auto_load_plugins
+from core.plugins.registry import get_registry
+from core.plugins.loader import load_all_plugins
 
 from workflow.preflight import prepare_target
 
-from analysis.coverage_analyzer import analyze_coverage
-from analysis.risk_analytics import analyze_risk
-from analysis.posture_analyzer import analyze_posture
-from analysis.validation_analytics import analyze_validation
+from workflow.control.scan_orchestrator import run_full_scan
+from workflow.control.intelligence_hub import build_intelligence
+from workflow.control.routing_engine import generate_attack_plan
+from workflow.control.agent_dispatcher import dispatch_agents
+
+from analysis.engine import AnalysisEngine
 
 from reports.json_report import generate_report
 from reports.llm_report import generate_llm_markdown
 
-from scanners.registry import execute_scanners
-
 
 def scan():
 
-    print("[WPCTF] Scan pipeline started")
+    print("[WPCTF v2] START FULL SATURATION MODE")
 
-    # --------------------------------------------------
-    # Preflight
-    # --------------------------------------------------
     target_context = prepare_target()
 
     target = target_context["target"]
@@ -38,183 +36,84 @@ def scan():
     environment = target_context["environment"]
 
     print(f"[Target] {target['name']}")
-    print(f"[Profile] {profile['name']}")
 
-    # --------------------------------------------------
-    # Scanner Registry
-    # --------------------------------------------------
-    scan_results = execute_scanners(
-        url,
-        profile["scanners"]
+    # -----------------------------
+    # Registry + LOAD PLUGINS (FIXED)
+    # -----------------------------
+    registry = get_registry()
+
+    auto_load_plugins()
+
+    print(f"[Registry] plugins loaded: {len(registry.get_all_plugins())}")
+
+    # -----------------------------
+    # FULL SCAN
+    # -----------------------------
+    scan_results = run_full_scan(
+        registry,
+        target,
+        context=target_context
     )
 
-    # --------------------------------------------------
+    print(f"[Scan Complete] {len(scan_results)} modules executed")
+
+    # -----------------------------
     # LLM
-    # --------------------------------------------------
+    # -----------------------------
     llm_client = LLMClient()
-
     analyzer = LLMAnalyzer(llm_client)
+    llm_analysis = analyzer.analyze_scan(scan_results)
 
-    llm_analysis = analyzer.analyze_scan(
-        scan_results
-    )
-
-    # --------------------------------------------------
+    # -----------------------------
     # Context
-    # --------------------------------------------------
+    # -----------------------------
     ctx = AppContext(url)
+    ctx.scan_results = scan_results
 
-    for name, result in scan_results.items():
-        ctx.add_scan_result(name, result)
+    classification = classify_application(scan_results)
+    ctx.set_app_type(classification["app_type"])
+    ctx.set_classification(classification)
 
-    classification = classify_application(
-        scan_results
+    # -----------------------------
+    # Intelligence
+    # -----------------------------
+    intelligence = build_intelligence(scan_results, llm_analysis)
+    ctx.update_metadata("intelligence", intelligence)
+
+    # -----------------------------
+    # Routing
+    # -----------------------------
+    attack_plan = generate_attack_plan(intelligence)
+    ctx.update_metadata("attack_plan", attack_plan)
+
+    # -----------------------------
+    # Agents
+    # -----------------------------
+    agent_results = dispatch_agents(
+        attack_plan,
+        pentest_agent=target_context.get("pentest_agent")
     )
 
-    ctx.set_app_type(
-        classification["app_type"]
-    )
+    ctx.update_metadata("agent_results", agent_results)
 
-    ctx.set_classification(
-        classification
-    )
-
-    # --------------------------------------------------
-    # Attack Surface
-    # --------------------------------------------------
-    surface_result = build_attack_surface(
-        scan_results
-    )
-
-    surface_list = surface_result.get(
-        "surface_list",
-        []
-    )
-
-    graph = surface_result.get(
-        "graph",
-        {}
-    )
-
-    ctx.update_metadata(
-        "attack_graph",
-        graph
-    )
-
-    # --------------------------------------------------
-    # Test Plan
-    # --------------------------------------------------
-    test_tasks = generate_test_plan(
-        surface_list
-    )
-
-    analysis_input = {
-
-        "surface_list": surface_list,
-
-        "test_tasks": test_tasks,
-
-        "scan_results": scan_results,
-
-        "llm_analysis": llm_analysis
-
-    }
-
-    # --------------------------------------------------
+    # -----------------------------
     # Analysis
-    # --------------------------------------------------
-    risk_result = analyze_risk(
-        analysis_input
-    )
-
-    coverage_result = analyze_coverage(
-        surface_list,
-        test_tasks
-    )
-
-    posture_result = analyze_posture(
-        analysis_input,
-        risk_result
-    )
-
-    validation_result = analyze_validation(
-        analysis_input
-    )
-
-    analysis = {
-
-        "coverage": coverage_result,
-
-        "risk": risk_result,
-
-        "posture": posture_result,
-
-        "validation": validation_result,
-
-        "llm_analysis": llm_analysis
-
-    }
+    # -----------------------------
+    engine = AnalysisEngine()
+    analysis = engine.run(scan_results, ctx.to_dict())
 
     for k, v in analysis.items():
         ctx.add_analysis(k, v)
 
-    # --------------------------------------------------
-    # Metadata
-    # --------------------------------------------------
-    ctx.update_metadata(
-        "endpoints",
-        surface_list
-    )
-
-    ctx.update_metadata(
-        "risk_profile",
-        risk_result
-    )
-
-    ctx.update_metadata(
-        "findings",
-        scan_results
-    )
-
-    ctx.update_metadata(
-        "attack_graph",
-        graph
-    )
-
-    ctx.update_metadata(
-        "llm_analysis",
-        llm_analysis
-    )
-
-    ctx.update_metadata(
-        "environment",
-        environment
-    )
-
-    # --------------------------------------------------
+    # -----------------------------
     # Report
-    # --------------------------------------------------
-    report = generate_report(
-        ctx.to_dict()
-    )
+    # -----------------------------
+    report = generate_report(ctx.to_dict())
 
-    os.makedirs(
-        "output",
-        exist_ok=True
-    )
+    os.makedirs("output", exist_ok=True)
 
-    with open(
-        "output/report.json",
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            report,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
+    with open("output/report.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=4, ensure_ascii=False)
 
     llm_md = generate_llm_markdown(
         llm_analysis,
@@ -222,11 +121,7 @@ def scan():
         scan_results=scan_results
     )
 
-    with open(
-        "output/llm_analysis.md",
-        "w",
-        encoding="utf-8"
-    ) as f:
+    with open("output/llm_analysis.md", "w", encoding="utf-8") as f:
         f.write(llm_md)
 
-    print("[+] Done -> output/report.json")
+    print("[+] DONE -> output/report.json")

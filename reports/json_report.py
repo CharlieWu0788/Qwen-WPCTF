@@ -34,8 +34,6 @@ def generate_report(ctx: dict):
         # =========================================================
         "analysis": ctx.get("analysis"),
 
-        # 🔥 optional LLM raw output (if exists)
-        "llm_analysis": ctx.get("llm_analysis"),
 
         # =========================================================
         # Risk / posture layer
