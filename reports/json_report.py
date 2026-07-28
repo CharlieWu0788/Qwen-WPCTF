@@ -3,50 +3,82 @@ from datetime import datetime, timezone, timedelta
 
 def generate_report(ctx: dict):
 
-    # =========================================================
-    # Time (Asia/Shanghai / UTC+8)
-    # =========================================================
-    dt = datetime.now(timezone(timedelta(hours=8)))
+    dt = datetime.now(
+        timezone(
+            timedelta(hours=8)
+        )
+    )
 
-    # =========================================================
-    # Report Structure
-    # =========================================================
+
+    metadata = ctx.get(
+        "metadata",
+        {}
+    )
+
+
     return {
+
         "metadata": {
+
             "framework": "Local WPCTF",
-            "version": ctx.get("metadata", {}).get("framework_version", "v1.1.2"),
-            "target": ctx.get("target_url"),
-            "timestamp": dt.strftime("%Y-%m-%d %H:%M:%S")
+
+            "version": metadata.get(
+                "framework_version",
+                "v1.1.2"
+            ),
+
+            "target": ctx.get(
+                "target_url"
+            ),
+
+            "timestamp": dt.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
         },
 
-        # =========================================================
-        # Core classification
-        # =========================================================
-        "classification": ctx.get("classification"),
 
-        # =========================================================
-        # Raw scan results
-        # =========================================================
-        "scan_results": ctx.get("scan_results"),
-
-        # =========================================================
-        # Rule-based + LLM analysis layer
-        # =========================================================
-        "analysis": ctx.get("analysis"),
+        "classification":
+            ctx.get(
+                "classification"
+            ),
 
 
-        # =========================================================
-        # Risk / posture layer
-        # =========================================================
-        "risk_profile": ctx.get("risk_profile"),
+        "scan_results":
+            ctx.get(
+                "scan_results"
+            ),
 
-        # =========================================================
-        # Attack surface / endpoints
-        # =========================================================
-        "endpoints": ctx.get("endpoints"),
 
-        # =========================================================
-        # Graph (if present)
-        # =========================================================
-        "attack_graph": ctx.get("attack_graph"),
+        "analysis":
+            ctx.get(
+                "analysis"
+            ),
+
+
+        "risk_profile":
+            ctx.get(
+                "risk_profile"
+            ),
+
+
+        "endpoints":
+            ctx.get(
+                "endpoints"
+            ),
+
+
+        "attack_graph":
+            ctx.get(
+                "attack_graph"
+            ),
+
+
+        # PentestAgent output
+        "agent_results":
+            metadata.get(
+                "agent_results",
+                {}
+            )
+
     }

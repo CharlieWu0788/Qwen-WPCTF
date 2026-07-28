@@ -4,165 +4,407 @@ from workflow.attack_node import AttackNode
 from core.schema.capability_map import CAPABILITY_MAP
 from core.utils.normalize import normalize_item
 
-def build_attack_surface(scan_results: dict):
-    """
-    V1.2 Enhanced Scan-Based Attack Surface Builder
 
-    Improvements:
-    - structured graph topology (not linear chain)
-    - capability scoring (not pure keyword match)
-    - grouped surface layer
+
+def build_attack_surface(
+    scan_results: dict
+):
+    """
+    Build unified attack surface from scanner results.
+
+    Supports:
+    - native scanners
+    - saturation scan mode
+    - future external agents
     """
 
     scan_results = scan_results or {}
 
+
     graph = AttackGraph()
+
     attack_surface = []
+
+    capability_groups = {}
 
     node_index = 0
 
-    # =========================================================
-    # Capability scoring (NEW)
-    # =========================================================
-    def detect_capability_scored(text: str):
-        """
-        Returns:
-            (capability, score)
-        """
-        if not isinstance(text, str):
-            return "generic", 0.0
+
+
+    # ---------------------------------------------------------
+    # Capability detection
+    # ---------------------------------------------------------
+
+    def detect_capability(
+        text
+    ):
+
+        if not isinstance(
+            text,
+            str
+        ):
+            return (
+                "generic",
+                0.0
+            )
+
 
         text = text.lower()
 
-        best_cap = "generic"
-        best_score = 0.0
+
+        best = "generic"
+
+        score = 0
+
 
         for cap, keywords in CAPABILITY_MAP.items():
-            score = sum(1 for k in keywords if k in text)
 
-            if score > best_score:
-                best_cap = cap
-                best_score = score
-
-        return best_cap, float(best_score)
-
-    # =========================================================
-    # Node registry (NEW)
-    # =========================================================
-    capability_groups = {}
-
-    def add_node(source, items, surface_type_prefix):
-        nonlocal node_index
-
-        for item in items or []:
-
-            item = normalize_item(item)
-
-            capability, score = detect_capability_scored(item["url"])
-
-            node_id = f"node_{node_index}_{surface_type_prefix}"
-
-            node_type = f"{capability}_surface"
-
-            node = AttackNode(
-                node_id=node_id,
-                node_type=node_type,
-                target=item["url"]
+            current = sum(
+                1
+                for k in keywords
+                if k in text
             )
 
-            node.add_attribute("capability", capability)
-            node.add_attribute("capability_score", score)   # 🔥 NEW
-            node.add_attribute("source", source)
-            node.add_attribute("raw", item["raw"])
 
-            graph.add_node(node)
+            if current > score:
 
-            # =====================================================
-            # NEW: group by capability (STRUCTURE UPGRADE)
-            # =====================================================
-            capability_groups.setdefault(capability, []).append(node_id)
+                best = cap
 
-            attack_surface.append({
-                "id": node_id,
-                "type": node_type,
-                "capability": capability,
-                "capability_score": score,
-                "target": item["url"],
-                "source_scanner": source,
-                "metadata": item["raw"]
-            })
+                score = current
 
-            node_index += 1
 
-    def scanner_result(name):
-        result = scan_results.get(name) or scan_results.get(f"{name}_scan") or {}
-        return result if isinstance(result, dict) else {}
-
-    # =========================================================
-    # 1. WordPress Surface
-    # =========================================================
-    wp = scanner_result("wordpress")
-
-    if wp.get("wordpress_detected"):
-        add_node(
-            "wordpress",
-            [{"url": wp.get("final_url", "")}],
-            "wordpress"
+        return (
+            best,
+            float(score)
         )
 
-    # =========================================================
-    # 2. Auth Surface
-    # =========================================================
-    auth = scanner_result("auth")
 
-    add_node(
-        "auth_login_urls",
-        [{"url": u} for u in auth.get("login_urls", [])],
-        "auth"
-    )
 
-    add_node(
-        "auth_links",
-        auth.get("discovered_links", []),
-        "auth"
-    )
+    # ---------------------------------------------------------
+    # Add surface node
+    # ---------------------------------------------------------
 
-    # =========================================================
-    # 3. SQL Surface
-    # =========================================================
-    sql = scanner_result("sql")
+    def add_surface(
+        source,
+        target,
+        raw=None,
+        surface_type=None
+    ):
 
-    add_node(
-        "sql_params",
-        [{"url": "parameter_based_scan"}] if sql.get("tested_payloads") else [],
-        "sql"
-    )
+        nonlocal node_index
 
-    # =========================================================
-    # 4. XSS Surface
-    # =========================================================
-    xss = scanner_result("xss")
 
-    if xss.get("tested_payloads"):
-        add_node(
-            "xss_payloads",
-            [{"url": "form_input_surface"}],
-            "xss"
+        capability, score = detect_capability(
+            str(target)
         )
 
-    # =========================================================
-    # 🔥 NEW: intra-capability graph linking
-    # =========================================================
-    for cap, nodes in capability_groups.items():
-        for i in range(len(nodes) - 1):
-            graph.add_edge(nodes[i], nodes[i + 1])
 
-    # =========================================================
-    # Final Output (ENHANCED CONTRACT)
-    # =========================================================
+        node_id = (
+            f"node_{node_index}_"
+            f"{surface_type or capability}"
+        )
+
+
+        node_type = (
+            f"{capability}_surface"
+        )
+
+
+        node = AttackNode(
+
+            node_id=node_id,
+
+            node_type=node_type,
+
+            target=target
+
+        )
+
+
+        node.add_attribute(
+            "capability",
+            capability
+        )
+
+
+        node.add_attribute(
+            "capability_score",
+            score
+        )
+
+
+        node.add_attribute(
+            "source",
+            source
+        )
+
+
+        node.add_attribute(
+            "raw",
+            raw or {}
+        )
+
+
+        graph.add_node(
+            node
+        )
+
+
+        capability_groups.setdefault(
+            capability,
+            []
+        ).append(
+            node_id
+        )
+
+
+        attack_surface.append({
+
+            "id":
+                node_id,
+
+
+            "type":
+                node_type,
+
+
+            "capability":
+                capability,
+
+
+            "capability_score":
+                score,
+
+
+            "target":
+                target,
+
+
+            "source_scanner":
+                source,
+
+
+            "metadata":
+                raw or {}
+
+        })
+
+
+        node_index += 1
+
+
+
+    # ---------------------------------------------------------
+    # Generic scanner extraction
+    # ---------------------------------------------------------
+
+    for scanner, result in scan_results.items():
+
+
+        if not isinstance(
+            result,
+            dict
+        ):
+
+            continue
+
+
+
+        # target/url extraction
+
+        target = result.get(
+            "target"
+        )
+
+
+        if isinstance(
+            target,
+            dict
+        ):
+
+            target = (
+                target.get("url")
+                or target.get("target")
+            )
+
+
+
+        # -----------------------------------------------------
+        # endpoints
+        # -----------------------------------------------------
+
+        for endpoint in result.get(
+            "endpoints",
+            []
+        ):
+
+            add_surface(
+
+                scanner,
+
+                endpoint,
+
+                {
+                    "type":
+                        "endpoint"
+                },
+
+                scanner
+
+            )
+
+
+
+        # -----------------------------------------------------
+        # URLs
+        # -----------------------------------------------------
+
+        for url in result.get(
+            "urls",
+            []
+        ):
+
+            add_surface(
+
+                scanner,
+
+                url,
+
+                {
+                    "type":
+                        "url"
+                },
+
+                scanner
+
+            )
+
+
+
+        # -----------------------------------------------------
+        # Findings
+        # -----------------------------------------------------
+
+        findings = result.get(
+            "findings"
+        )
+
+
+        if findings:
+
+
+            add_surface(
+
+                scanner,
+
+                f"{scanner}_finding",
+
+                {
+                    "findings":
+                        findings
+                },
+
+                scanner
+
+            )
+
+
+
+        # -----------------------------------------------------
+        # Vulnerability flag
+        # -----------------------------------------------------
+
+        vuln = result.get(
+            "vuln"
+        )
+
+
+        if vuln:
+
+
+            add_surface(
+
+                scanner,
+
+                f"{scanner}:{vuln}",
+
+                {
+                    "vulnerability":
+                        vuln
+                },
+
+                scanner
+
+            )
+
+
+
+        # -----------------------------------------------------
+        # Boolean detection
+        # -----------------------------------------------------
+
+        for key,value in result.items():
+
+            if (
+                key.endswith(
+                    "_detected"
+                )
+                or
+                key.endswith(
+                    "_found"
+                )
+            ) and value is True:
+
+
+                add_surface(
+
+                    scanner,
+
+                    key,
+
+                    {
+                        "signal":
+                            key
+                    },
+
+                    scanner
+
+                )
+
+
+
+    # ---------------------------------------------------------
+    # Link same capability nodes
+    # ---------------------------------------------------------
+
+    for cap,nodes in capability_groups.items():
+
+        for i in range(
+            len(nodes)-1
+        ):
+
+            graph.add_edge(
+                nodes[i],
+                nodes[i+1]
+            )
+
+
+
     return {
-        "schema_version": "v2.2.0",
-        "graph": graph.to_dict(),
-        "surface_list": attack_surface,
-        "capability_groups": capability_groups   # 🔥 NEW
+
+        "schema_version":
+            "v2.3.0",
+
+
+        "graph":
+            graph.to_dict(),
+
+
+        "surface_list":
+            attack_surface,
+
+
+        "capability_groups":
+            capability_groups
+
     }

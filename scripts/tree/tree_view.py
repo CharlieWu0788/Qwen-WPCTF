@@ -23,6 +23,14 @@ def tree_full(path="."):
     _tree(path, mode="full")
 
 
+def tree(path: str = ".", mode: str = "core"):
+    if mode == "core":
+        tree_core(path)
+    elif mode == "full":
+        tree_full(path)
+    else:
+        raise ValueError("Invalid mode. Use 'core' or 'full'.")
+
 # -----------------------------------------------------
 # FILTER LOGIC
 # -----------------------------------------------------

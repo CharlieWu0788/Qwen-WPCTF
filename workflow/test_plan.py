@@ -1,18 +1,150 @@
-def generate_test_plan(attack_surface):
-    """
-    Generate test tasks from attack surface.
-    """
+def generate_attack_plan(intelligence):
 
-    tasks = []
+    plan = {
+        "sql": [],
+        "xss": [],
+        "auth": [],
+        "upload": [],
+        "bruteforce": [],
+        "agent_tasks": []
+    }
 
-    for surface in attack_surface:
 
-        for test in surface.get("possible_tests", []):
+    # ---------------------------------
+    # Target extraction
+    # ---------------------------------
 
-            tasks.append({
-                "surface_type": surface["type"],
-                "target": surface["target"],
-                "test": test
-            })
+    target = (
+        intelligence.get("target")
+        or intelligence.get("url")
+        or intelligence.get("raw", {})
+        .get("metadata", {})
+        .get("target")
+    )
 
-    return tasks
+
+    # ---------------------------------
+    # Surface based planning
+    # ---------------------------------
+
+    for u in (
+        intelligence.get("urls", [])
+        +
+        intelligence.get("endpoints", [])
+    ):
+
+
+        plan["sql"].append(u)
+
+        plan["xss"].append(u)
+
+
+
+        if "login" in u.lower():
+
+            plan["auth"].append(u)
+
+
+
+        if "upload" in u.lower():
+
+            plan["upload"].append(u)
+
+
+
+    # ---------------------------------
+    # Generate PentestAgent tasks
+    # ---------------------------------
+
+    generated_targets = set()
+
+
+    for finding in intelligence.get(
+        "findings",
+        []
+    ):
+
+
+        if not target:
+
+            continue
+
+
+
+        task_key = (
+            target,
+            finding.get("scanner"),
+            finding.get("type")
+        )
+
+
+        if task_key in generated_targets:
+
+            continue
+
+
+        generated_targets.add(task_key)
+
+
+
+        plan["agent_tasks"].append(
+            {
+
+                "mode": "agent",
+
+                # IMPORTANT
+                # PentestAgent receives real target
+                "target": target,
+
+
+                # keep scanner information
+                # for reasoning
+                "module":
+                    finding.get(
+                        "scanner"
+                    ),
+
+
+                "reason": finding
+
+            }
+        )
+
+
+
+    # ---------------------------------
+    # Fallback high risk modules
+    # ---------------------------------
+
+    if not plan["agent_tasks"]:
+
+
+        for module in intelligence.get(
+            "high_risk_modules",
+            []
+        ):
+
+
+            if not target:
+
+                continue
+
+
+
+            plan["agent_tasks"].append(
+                {
+
+                    "mode":"agent",
+
+                    "target":target,
+
+                    "module":module,
+
+                    "reason":
+                        "high risk module"
+
+                }
+            )
+
+
+    return plan

@@ -170,7 +170,7 @@ It includes:
 
 - Coverage analysis
 - Risk scoring
-- Security posture evaluation
+- Security posture evaluation  
 - Validation completeness assessment
 
 All outputs are deterministic and schema-driven.
@@ -187,7 +187,7 @@ Capabilities include:
 - Attack vector reasoning
 - Risk narrative generation
 - Mitigation recommendations
-- Bilingual output (English + Chinese)
+- Bilingual output (English + Chinese)          
 
 The LLM layer does not control execution flow.
 

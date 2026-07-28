@@ -1,4 +1,5 @@
 import argparse
+import traceback
 
 from scripts.tree.tree_view import tree_core, tree_full
 from workflow.pipeline import scan
@@ -69,10 +70,20 @@ def main():
         # -----------------------------------------------------
         print(f"[ERROR] Unknown mode: {args.mode}")
 
+
     except KeyboardInterrupt:
+
         print("\n[WPCTF] Interrupted by user")
+
+
     except Exception as e:
-        print(f"[WPCTF][FATAL ERROR] {e}")
+
+        print(
+            f"[WPCTF][FATAL ERROR] {e}"
+        )
+
+        # Debug traceback output
+        traceback.print_exc()
 
 
 # =========================================================
